@@ -27,7 +27,7 @@ public class BinaryExpression extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "(" + operator.getLexeme() + " " + left + " " + right + ")";
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visitBinaryExpression(this);
     }
 }

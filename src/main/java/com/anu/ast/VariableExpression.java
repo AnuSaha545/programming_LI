@@ -15,7 +15,7 @@ public class VariableExpression extends Expression {
     }
 
     @Override
-    public String toString() {
-        return name.getLexeme();
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visitVariableExpression(this);
     }
 }

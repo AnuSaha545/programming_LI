@@ -1,12 +1,10 @@
 package com.anu.parser;
 
-import com.anu.ast.BinaryExpression;
-import com.anu.ast.LiteralExpression;
-import com.anu.ast.UnaryExpression;
+import com.anu.ast.*;
 import com.anu.token.Token;
 import com.anu.token.TokenType;
-import com.anu.ast.Expression;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
@@ -16,62 +14,68 @@ public class Parser {
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
-        this.current = 0;
     }
 
-    private boolean isAtEnd() {
-        return peek().getType() == TokenType.EOF;
-    }
+    public Program parse() {
 
-    private Token peek() {
-        return tokens.get(current);
-    }
+        List<Statement> statements = new ArrayList<>();
 
-    private Token previous() {
-        return tokens.get(current - 1);
-    }
-
-    private Token advance() {
-
-        if (!isAtEnd()) {
-            current++;
+        while (!isAtEnd()) {
+            statements.add(statement());
         }
 
-        return previous();
+        return new Program(statements);
     }
-    private boolean check(TokenType type) {
 
-        if (isAtEnd()) {
-            return false;
+    private Statement statement() {
+
+        if (match(TokenType.LET)) {
+            return variableDeclaration();
         }
 
-        return peek().getType() == type;
-    }
-
-    private boolean match(TokenType... types) {
-
-        for (TokenType type : types) {
-
-            if (check(type)) {
-                advance();
-                return true;
-            }
+        if (match(TokenType.PRINT)) {
+            return printStatement();
         }
 
-        return false;
+        return expressionStatement();
+    }
+    private Statement variableDeclaration() {
+
+        Token name = consume(
+                TokenType.IDENTIFIER,
+                "Expected variable name.");
+
+        consume(
+                TokenType.ASSIGN,
+                "Expected '=' after variable name.");
+
+        Expression initializer = expression();
+
+        consume(
+                TokenType.SEMICOLON,
+                "Expected ';' after variable declaration.");
+
+        return new VariableStatement(name, initializer);
     }
 
-    private Token consume(TokenType type, String message) {
+    private Statement printStatement() {
 
-        if (check(type)) {
-            return advance();
-        }
+        Expression value = expression();
 
-        throw new RuntimeException(message);
+        consume(TokenType.SEMICOLON,
+                "Expected ';' after value.");
+
+        return new PrintStatement(value);
     }
 
-    public Expression parse() {
-        return expression();
+    private Statement expressionStatement() {
+
+        Expression value = expression();
+
+        consume(TokenType.SEMICOLON,
+                "Expected ';' after expression.");
+
+        return new ExpressionStatement(value);
     }
 
     private Expression expression() {
@@ -92,6 +96,7 @@ public class Parser {
 
         return expression;
     }
+
     private Expression comparison() {
 
         Expression expression = term();
@@ -110,6 +115,7 @@ public class Parser {
 
         return expression;
     }
+
     private Expression term() {
 
         Expression expression = factor();
@@ -124,6 +130,7 @@ public class Parser {
 
         return expression;
     }
+
     private Expression factor() {
 
         Expression expression = unary();
@@ -138,9 +145,10 @@ public class Parser {
 
         return expression;
     }
+
     private Expression unary() {
 
-        if (match(TokenType.NOT_EQUAL, TokenType.MINUS)) {
+        if (match(TokenType.MINUS)) {
 
             Token operator = previous();
             Expression right = unary();
@@ -150,33 +158,76 @@ public class Parser {
 
         return primary();
     }
+
     private Expression primary() {
 
-        if (match(TokenType.FALSE)) {
-            return new LiteralExpression(false);
-        }
-
-        if (match(TokenType.TRUE)) {
-            return new LiteralExpression(true);
-        }
-
-        if (match(TokenType.NULL)) {
-            return new LiteralExpression(null);
-        }
+        if (match(TokenType.FALSE)) return new LiteralExpression(false);
+        if (match(TokenType.TRUE)) return new LiteralExpression(true);
+        if (match(TokenType.NULL)) return new LiteralExpression(null);
 
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new LiteralExpression(previous().getLiteral());
+        }
+
+        if (match(TokenType.IDENTIFIER)) {
+            return new VariableExpression(previous());
         }
 
         if (match(TokenType.LEFT_PAREN)) {
 
             Expression expression = expression();
 
-            consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.");
+            consume(TokenType.RIGHT_PAREN,
+                    "Expected ')' after expression.");
 
             return expression;
         }
 
         throw new RuntimeException("Expected expression.");
+    }
+
+    private boolean match(TokenType... types) {
+
+        for (TokenType type : types) {
+            if (check(type)) {
+                advance();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean check(TokenType type) {
+
+        if (isAtEnd()) return false;
+
+        return peek().getType() == type;
+    }
+
+    private Token advance() {
+
+        if (!isAtEnd()) current++;
+
+        return previous();
+    }
+
+    private boolean isAtEnd() {
+        return peek().getType() == TokenType.EOF;
+    }
+
+    private Token peek() {
+        return tokens.get(current);
+    }
+
+    private Token previous() {
+        return tokens.get(current - 1);
+    }
+
+    private Token consume(TokenType type, String message) {
+
+        if (check(type)) return advance();
+
+        throw new RuntimeException(message);
     }
 }

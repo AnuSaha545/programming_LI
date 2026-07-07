@@ -21,7 +21,7 @@ public class UnaryExpression extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "(" + operator.getLexeme() + " " + right + ")";
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visitUnaryExpression(this);
     }
 }

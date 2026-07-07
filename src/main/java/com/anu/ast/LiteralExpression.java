@@ -13,7 +13,7 @@ public class LiteralExpression extends Expression {
     }
 
     @Override
-    public String toString() {
-        return String.valueOf(value);
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visitLiteralExpression(this);
     }
 }
