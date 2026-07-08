@@ -2,11 +2,41 @@ package com.anu.interpreter;
 
 import com.anu.ast.*;
 import com.anu.runtime.Environment;
+import com.anu.ast.AssignmentExpression;
+import com.anu.ast.IfStatement;
+import com.anu.ast.WhileStatement;
+import com.anu.ast.FunctionStatement;
+import com.anu.runtime.AnuFunction;
+import com.anu.ast.CallExpression;
+import com.anu.ast.ReturnStatement;
+import com.anu.runtime.Return;
+import com.anu.runtime.AnuCallable;
+
+import java.util.List;
 
 public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<Void> {
 
-    private final Environment environment = new Environment();
+    private Environment environment = new Environment();
+    public void executeBlock(BlockStatement block, Environment environment) {
 
+        executeBlock(block.getStatements(), environment);
+    }
+
+    public void executeBlock(List<Statement> statements, Environment environment) {
+
+        Environment previous = this.environment;
+
+        try {
+            this.environment = environment;
+
+            for (Statement statement : statements) {
+                execute(statement);
+            }
+
+        } finally {
+            this.environment = previous;
+        }
+    }
     /* ===========================
        Program Execution
        =========================== */
@@ -49,6 +79,9 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
             case MINUS:
                 return -((Integer) right);
+
+            case NOT:
+                return !((Boolean) right);
 
             default:
                 throw new RuntimeException(
@@ -116,6 +149,11 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
             case NOT_EQUAL:
                 return !left.equals(right);
+            case AND:
+                return (Boolean) left && (Boolean) right;
+
+            case OR:
+                return (Boolean) left || (Boolean) right;
 
             default:
                 throw new RuntimeException(
@@ -153,14 +191,110 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+    @Override
+    public Object visitAssignmentExpression(AssignmentExpression expression) {
+
+        Object value = evaluate(expression.getValue());
+
+        environment.assign(
+                expression.getName().getLexeme(),
+                value);
+
+        return value;
+    }
 
     @Override
     public Void visitBlockStatement(BlockStatement statement) {
 
-        for (Statement stmt : statement.getStatements()) {
-            execute(stmt);
+        executeBlock(
+                statement,
+                new Environment(environment));
+
+        return null;
+    }
+    @Override
+    public Void visitIfStatement(IfStatement statement) {
+
+        Object condition = evaluate(statement.getCondition());
+
+        if ((Boolean) condition) {
+            execute(statement.getThenBranch());
+        } else if (statement.getElseBranch() != null) {
+            execute(statement.getElseBranch());
         }
 
         return null;
+    }
+    @Override
+    public Void visitWhileStatement(WhileStatement statement) {
+
+        while ((Boolean) evaluate(statement.getCondition())) {
+            execute(statement.getBody());
+        }
+
+        return null;
+    }
+    @Override
+    public Void visitFunctionStatement(FunctionStatement statement) {
+
+        AnuFunction function = new AnuFunction(statement);
+
+        environment.define(
+                statement.getName().getLexeme(),
+                function);
+
+        return null;
+    }
+    @Override
+    public Object visitCallExpression(CallExpression expression) {
+
+        Object callee = evaluate(expression.getCallee());
+
+        if (!(callee instanceof AnuCallable)) {
+            throw new RuntimeException("Can only call functions.");
+        }
+
+        AnuCallable function = (AnuCallable) callee;
+
+        List<Object> arguments = new java.util.ArrayList<>();
+
+        for (Expression argument : expression.getArguments()) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeException(
+                    "Expected " + function.arity()
+                            + " arguments but got "
+                            + arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
+    }
+
+    @Override
+    public Void visitReturnStatement(ReturnStatement statement) {
+
+        Object value = null;
+
+        if (statement.getValue() != null) {
+            value = evaluate(statement.getValue());
+        }
+
+        throw new com.anu.runtime.Return(value);
+    }
+
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
+
+    public void executeStatements(List<Statement> statements) {
+        for (Statement statement : statements) {
+            execute(statement);
+        }
     }
 }

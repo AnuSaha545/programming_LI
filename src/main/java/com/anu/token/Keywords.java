@@ -18,6 +18,7 @@ public class Keywords {
         KEYWORDS.put("false", TokenType.FALSE);
         KEYWORDS.put("null", TokenType.NULL);
         KEYWORDS.put("print", TokenType.PRINT);
+        KEYWORDS.put("for", TokenType.FOR);
     }
 
     private Keywords() {

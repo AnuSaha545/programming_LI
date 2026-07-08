@@ -10,4 +10,7 @@ public interface ExpressionVisitor<T> {
 
     T visitVariableExpression(VariableExpression expression);
 
+    T visitAssignmentExpression(AssignmentExpression expression);
+
+    T visitCallExpression(CallExpression expression);
 }

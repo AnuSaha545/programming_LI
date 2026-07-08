@@ -21,9 +21,14 @@ public enum TokenType {
     MODULO,
 
     // ===== One or Two Character Tokens =====
-    ASSIGN,          // =
-    EQUAL_EQUAL,     // ==
-    NOT_EQUAL,       // !=
+    ASSIGN,
+    EQUAL_EQUAL,
+
+    AND,
+    OR,
+
+    NOT,
+    NOT_EQUAL,
 
     LESS,
     LESS_EQUAL,
@@ -40,6 +45,8 @@ public enum TokenType {
     LET,
     FUN,
     RETURN,
+
+    FOR,
 
     IF,
     ELSE,

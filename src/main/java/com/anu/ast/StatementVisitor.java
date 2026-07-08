@@ -9,4 +9,12 @@ public interface StatementVisitor<T> {
     T visitPrintStatement(PrintStatement statement);
 
     T visitBlockStatement(BlockStatement statement);
+
+    T visitIfStatement(IfStatement statement);
+
+    T visitWhileStatement(WhileStatement statement);
+
+    T visitFunctionStatement(FunctionStatement statement);
+
+    T visitReturnStatement(ReturnStatement statement);
 }

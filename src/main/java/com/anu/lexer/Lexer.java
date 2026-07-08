@@ -41,6 +41,28 @@ public class Lexer {
 
         switch (c) {
 
+            case '&':
+
+                if (match('&')) {
+                    addToken(TokenType.AND);
+                } else {
+                    throw new RuntimeException(
+                            "Unexpected character '&' at line " + line);
+                }
+
+                break;
+
+            case '|':
+
+                if (match('|')) {
+                    addToken(TokenType.OR);
+                } else {
+                    throw new RuntimeException(
+                            "Unexpected character '|' at line " + line);
+                }
+
+                break;
+
             case '(':
                 addToken(TokenType.LEFT_PAREN);
                 break;
@@ -70,7 +92,40 @@ public class Lexer {
                 break;
 
             case '/':
-                addToken(TokenType.SLASH);
+
+                if (match('/')) {
+
+                    while (peek() != '\n' && !isAtEnd()) {
+                        advance();
+                    }
+
+                } else if (match('*')) {
+
+                    while (!isAtEnd()) {
+
+                        if (peek() == '\n') {
+                            line++;
+                        }
+
+                        if (peek() == '*' && peekNext() == '/') {
+                            advance(); // *
+                            advance(); // /
+                            break;
+                        }
+
+                        advance();
+                    }
+
+                    if (isAtEnd()) {
+                        throw new RuntimeException(
+                                "Unterminated multi-line comment at line " + line);
+                    }
+
+                } else {
+
+                    addToken(TokenType.SLASH);
+                }
+
                 break;
 
             case '%':
@@ -86,9 +141,9 @@ public class Lexer {
                 break;
 
             case '!':
-                if (match('=')) {
-                    addToken(TokenType.NOT_EQUAL);
-                }
+
+                addToken(match('=') ? TokenType.NOT_EQUAL : TokenType.NOT);
+
                 break;
 
             case '<':
