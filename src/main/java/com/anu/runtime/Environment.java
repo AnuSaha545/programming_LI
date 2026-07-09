@@ -30,7 +30,11 @@ public class Environment {
             return enclosing.get(name);
         }
 
-        throw new RuntimeException("Undefined variable: " + name);
+        throw new RuntimeException(
+                "\nRuntime Error\n" +
+                        "-------------------------\n" +
+                        "Undefined variable: " + name
+        );
     }
 
     public void assign(String name, Object value) {
@@ -45,7 +49,11 @@ public class Environment {
             return;
         }
 
-        throw new RuntimeException("Undefined variable: " + name);
+        throw new RuntimeException(
+                "\nRuntime Error\n" +
+                        "-------------------------\n" +
+                        "Undefined variable: " + name
+        );
     }
 
     public Environment getEnclosing() {

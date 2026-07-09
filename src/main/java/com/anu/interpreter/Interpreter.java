@@ -1,22 +1,27 @@
 package com.anu.interpreter;
 
 import com.anu.ast.*;
-import com.anu.runtime.Environment;
+import com.anu.runtime.*;
 import com.anu.ast.AssignmentExpression;
 import com.anu.ast.IfStatement;
 import com.anu.ast.WhileStatement;
 import com.anu.ast.FunctionStatement;
-import com.anu.runtime.AnuFunction;
 import com.anu.ast.CallExpression;
 import com.anu.ast.ReturnStatement;
-import com.anu.runtime.Return;
-import com.anu.runtime.AnuCallable;
+import com.anu.runtime.LenFunction;
+import com.anu.runtime.InputFunction;
 
 import java.util.List;
 
 public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<Void> {
 
     private Environment environment = new Environment();
+
+    public Interpreter() {
+        environment.define("clock", new ClockFunction());
+        environment.define("len", new LenFunction());
+        environment.define("input", new InputFunction());
+    }
     public void executeBlock(BlockStatement block, Environment environment) {
 
         executeBlock(block.getStatements(), environment);
@@ -177,9 +182,29 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         Object value = evaluate(statement.getExpression());
 
-        System.out.println(value);
+        System.out.println(stringify(value));
 
         return null;
+    }
+    private String stringify(Object value) {
+
+        if (value == null) {
+            return "null";
+        }
+
+        if (value instanceof Integer) {
+            return value.toString();
+        }
+
+        if (value instanceof Boolean) {
+            return value.toString();
+        }
+
+        if (value instanceof String) {
+            return (String) value;
+        }
+
+        return value.toString();
     }
 
     @Override
@@ -229,9 +254,13 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     public Void visitWhileStatement(WhileStatement statement) {
 
         while ((Boolean) evaluate(statement.getCondition())) {
-            execute(statement.getBody());
-        }
 
+            try {
+                execute(statement.getBody());
+            } catch (Break ignored) {
+                break;
+            }
+        }
         return null;
     }
     @Override
@@ -296,5 +325,9 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         for (Statement statement : statements) {
             execute(statement);
         }
+    }
+    @Override
+    public Void visitBreakStatement(BreakStatement statement) {
+        throw new Break();
     }
 }

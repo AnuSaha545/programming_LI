@@ -19,6 +19,7 @@ public class Keywords {
         KEYWORDS.put("null", TokenType.NULL);
         KEYWORDS.put("print", TokenType.PRINT);
         KEYWORDS.put("for", TokenType.FOR);
+        KEYWORDS.put("break", TokenType.BREAK);
     }
 
     private Keywords() {

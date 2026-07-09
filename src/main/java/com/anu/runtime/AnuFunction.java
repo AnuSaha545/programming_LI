@@ -19,6 +19,10 @@ public class AnuFunction implements AnuCallable {
     public int arity() {
         return declaration.getParameters().size();
     }
+    @Override
+    public String toString() {
+        return "<fn " + declaration.getName().getLexeme() + ">";
+    }
 
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {

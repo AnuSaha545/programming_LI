@@ -17,4 +17,7 @@ public interface StatementVisitor<T> {
     T visitFunctionStatement(FunctionStatement statement);
 
     T visitReturnStatement(ReturnStatement statement);
+
+    T visitBreakStatement(BreakStatement statement);
+
 }

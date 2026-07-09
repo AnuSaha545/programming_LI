@@ -47,6 +47,7 @@ public enum TokenType {
     RETURN,
 
     FOR,
+    BREAK,
 
     IF,
     ELSE,

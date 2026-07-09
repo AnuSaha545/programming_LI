@@ -1,0 +1,5 @@
+let name = "Anu";
+let age = 21;
+
+print name;
+print age;

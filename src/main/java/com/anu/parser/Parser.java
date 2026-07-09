@@ -42,6 +42,9 @@ public class Parser {
         if (match(TokenType.RETURN)) {
             return returnStatement();
         }
+        if (match(TokenType.FOR)) {
+            return forStatement();
+        }
 
         if (match(TokenType.WHILE)) {
             return whileStatement();
@@ -62,7 +65,9 @@ public class Parser {
         if (match(TokenType.PRINT)) {
             return printStatement();
         }
-
+        if (match(TokenType.BREAK)) {
+            return breakStatement();
+        }
         return expressionStatement();
     }
     private Statement returnStatement() {
@@ -426,5 +431,72 @@ public class Parser {
         if (check(type)) return advance();
 
         throw new RuntimeException(message);
+    }
+    private Statement forStatement() {
+
+        consume(TokenType.LEFT_PAREN,
+                "Expected '(' after 'for'.");
+
+        Statement initializer;
+
+        if (match(TokenType.SEMICOLON)) {
+            initializer = null;
+        } else if (match(TokenType.LET)) {
+            initializer = variableDeclaration();
+        } else {
+            initializer = expressionStatement();
+        }
+
+        Expression condition = null;
+
+        if (!check(TokenType.SEMICOLON)) {
+            condition = expression();
+        }
+
+        consume(TokenType.SEMICOLON,
+                "Expected ';' after loop condition.");
+
+        Expression increment = null;
+
+        if (!check(TokenType.RIGHT_PAREN)) {
+            increment = expression();
+        }
+
+        consume(TokenType.RIGHT_PAREN,
+                "Expected ')' after for clauses.");
+
+        Statement body = statement();
+
+        if (increment != null) {
+
+            List<Statement> statements = new ArrayList<>();
+            statements.add(body);
+            statements.add(new ExpressionStatement(increment));
+
+            body = new BlockStatement(statements);
+        }
+
+        if (condition == null) {
+            condition = new LiteralExpression(true);
+        }
+
+        body = new WhileStatement(condition, body);
+
+        if (initializer != null) {
+
+            List<Statement> statements = new ArrayList<>();
+            statements.add(initializer);
+            statements.add(body);
+
+            body = new BlockStatement(statements);
+        }
+        return body;
+    }
+    private Statement breakStatement() {
+
+        consume(TokenType.SEMICOLON,
+                "Expected ';' after break.");
+
+        return new BreakStatement();
     }
 }
