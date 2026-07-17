@@ -84,7 +84,7 @@ public class Parser {
 
         return new ReturnStatement(value);
     }
-    private Statement functionDeclaration() {
+    private FunctionStatement functionDeclaration() {
 
         Token name = consume(
                 TokenType.IDENTIFIER,
@@ -220,8 +220,29 @@ public class Parser {
         while (true) {
 
             if (match(TokenType.LEFT_PAREN)) {
+
                 expression = finishCall(expression);
+
+            }
+            else if (match(TokenType.DOT)) {
+
+                Token name = consume(
+                        TokenType.IDENTIFIER,
+                        "Expected property name after '.'.");
+
+                expression = new GetExpression(expression, name);
+            }else if (match(TokenType.LEFT_BRACKET)) {
+
+                Expression index = expression();
+
+                consume(
+                        TokenType.RIGHT_BRACKET,
+                        "Expected ']' after index.");
+
+                expression = new IndexExpression(expression, index);
+
             } else {
+
                 break;
             }
         }
@@ -265,8 +286,6 @@ public class Parser {
 
         if (match(TokenType.ASSIGN)) {
 
-            Token equals = previous();
-
             Expression value = assignment();
 
             if (expression instanceof VariableExpression) {
@@ -276,12 +295,22 @@ public class Parser {
                 return new AssignmentExpression(name, value);
             }
 
+            if (expression instanceof IndexExpression) {
+
+                IndexExpression indexExpression = (IndexExpression) expression;
+
+                return new SetIndexExpression(
+                        indexExpression.getArray(),
+                        indexExpression.getIndex(),
+                        value
+                );
+            }
+
             throw new RuntimeException("Invalid assignment target.");
         }
 
         return expression;
-    }
-    private Expression expression() {
+    }    private Expression expression() {
         return assignment();
     }
 
@@ -364,10 +393,16 @@ public class Parser {
     private Expression primary() {
 
         if (match(TokenType.FALSE)) return new LiteralExpression(false);
+
         if (match(TokenType.TRUE)) return new LiteralExpression(true);
+
         if (match(TokenType.NULL)) return new LiteralExpression(null);
 
-        if (match(TokenType.NUMBER, TokenType.STRING)) {
+        if (match(TokenType.NUMBER)) {
+            return new LiteralExpression(previous().getLiteral());
+        }
+
+        if (match(TokenType.STRING)) {
             return new LiteralExpression(previous().getLiteral());
         }
 
@@ -375,19 +410,25 @@ public class Parser {
             return new VariableExpression(previous());
         }
 
-        if (match(TokenType.LEFT_PAREN)) {
+        if (match(TokenType.LEFT_BRACKET)) {
 
-            Expression expression = expression();
+            List<Expression> elements = new ArrayList<>();
 
-            consume(TokenType.RIGHT_PAREN,
-                    "Expected ')' after expression.");
+            if (!check(TokenType.RIGHT_BRACKET)) {
 
-            return expression;
+                do {
+                    elements.add(expression());
+                } while (match(TokenType.COMMA));
+            }
+
+            consume(TokenType.RIGHT_BRACKET,
+                    "Expected ']' after array.");
+
+            return new ArrayExpression(elements);
         }
 
         throw new RuntimeException("Expected expression.");
     }
-
     private boolean match(TokenType... types) {
 
         for (TokenType type : types) {
@@ -498,5 +539,24 @@ public class Parser {
                 "Expected ';' after break.");
 
         return new BreakStatement();
+    }
+    private Statement classDeclaration() {
+
+        Token name = consume(TokenType.IDENTIFIER,
+                "Expected class name.");
+
+        consume(TokenType.LEFT_BRACE,
+                "Expected '{' before class body.");
+
+        List<FunctionStatement> methods = new ArrayList<>();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(functionDeclaration());
+        }
+
+        consume(TokenType.RIGHT_BRACE,
+                "Expected '}' after class body.");
+
+        return new ClassStatement(name, methods);
     }
 }

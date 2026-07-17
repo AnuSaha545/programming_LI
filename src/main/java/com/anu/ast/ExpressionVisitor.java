@@ -13,4 +13,12 @@ public interface ExpressionVisitor<T> {
     T visitAssignmentExpression(AssignmentExpression expression);
 
     T visitCallExpression(CallExpression expression);
+
+    T visitArrayExpression(ArrayExpression expression);
+
+    T visitIndexExpression(IndexExpression expression);
+
+    T visitSetIndexExpression(SetIndexExpression expression);
+
+    T visitGetExpression(GetExpression expression);
 }

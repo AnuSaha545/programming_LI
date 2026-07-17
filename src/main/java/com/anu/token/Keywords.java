@@ -20,6 +20,7 @@ public class Keywords {
         KEYWORDS.put("print", TokenType.PRINT);
         KEYWORDS.put("for", TokenType.FOR);
         KEYWORDS.put("break", TokenType.BREAK);
+        KEYWORDS.put("class", TokenType.CLASS);
     }
 
     private Keywords() {

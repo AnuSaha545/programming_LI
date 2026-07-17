@@ -10,8 +10,10 @@ import com.anu.ast.CallExpression;
 import com.anu.ast.ReturnStatement;
 import com.anu.runtime.LenFunction;
 import com.anu.runtime.InputFunction;
-
+import java.util.ArrayList;
 import java.util.List;
+import com.anu.ast.ClassStatement;
+
 
 public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<Void> {
 
@@ -22,6 +24,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         environment.define("len", new LenFunction());
         environment.define("input", new InputFunction());
     }
+
     public void executeBlock(BlockStatement block, Environment environment) {
 
         executeBlock(block.getStatements(), environment);
@@ -67,7 +70,12 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
     @Override
     public Object visitLiteralExpression(LiteralExpression expression) {
-        return expression.getValue();
+
+        Object value = expression.getValue();
+        if (value instanceof String) {
+            return new StringInstance((String) value);
+        }
+        return value;
     }
 
     @Override
@@ -186,27 +194,23 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+
     private String stringify(Object value) {
 
-        if (value == null) {
+        if (value == null)
             return "null";
-        }
 
-        if (value instanceof Integer) {
+        if (value instanceof Integer)
             return value.toString();
-        }
 
-        if (value instanceof Boolean) {
+        if (value instanceof Boolean)
             return value.toString();
-        }
 
-        if (value instanceof String) {
-            return (String) value;
-        }
+        if (value instanceof StringInstance string)
+            return string.getValue();
 
         return value.toString();
     }
-
     @Override
     public Void visitVariableStatement(VariableStatement statement) {
 
@@ -216,6 +220,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+
     @Override
     public Object visitAssignmentExpression(AssignmentExpression expression) {
 
@@ -237,6 +242,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+
     @Override
     public Void visitIfStatement(IfStatement statement) {
 
@@ -250,6 +256,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+
     @Override
     public Void visitWhileStatement(WhileStatement statement) {
 
@@ -263,6 +270,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         }
         return null;
     }
+
     @Override
     public Void visitFunctionStatement(FunctionStatement statement) {
 
@@ -274,6 +282,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return null;
     }
+
     @Override
     public Object visitCallExpression(CallExpression expression) {
 
@@ -326,8 +335,81 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
             execute(statement);
         }
     }
+
     @Override
     public Void visitBreakStatement(BreakStatement statement) {
         throw new Break();
+    }
+
+    @Override
+    public Object visitArrayExpression(ArrayExpression expression) {
+        List<Object> values = new ArrayList<>();
+
+        for (Expression element : expression.getElements()) {
+            values.add(evaluate(element));
+        }
+
+        return new ArrayInstance(values);
+    }
+
+    @Override
+    public Object visitIndexExpression(IndexExpression expression) {
+
+        Object array = evaluate(expression.getArray());
+        Object index = evaluate(expression.getIndex());
+
+        if (!(array instanceof ArrayInstance instance))
+            throw new RuntimeException("Can only index arrays.");
+
+        if (!(index instanceof Integer))
+            throw new RuntimeException("Array index must be an integer.");
+
+        List<Object> values = instance.getValues();
+        int i = (Integer) index;
+
+        if (i < 0 || i >= values.size())
+            throw new RuntimeException("Array index out of bounds.");
+
+        return values.get(i);
+    }
+
+    @Override
+    public Object visitSetIndexExpression(SetIndexExpression expression) {
+
+        Object array = evaluate(expression.getArray());
+        Object index = evaluate(expression.getIndex());
+        Object value = evaluate(expression.getValue());
+
+        if (!(array instanceof ArrayInstance instance))
+            throw new RuntimeException("Can only assign into arrays.");
+
+        if (!(index instanceof Integer))
+            throw new RuntimeException("Array index must be an integer.");
+
+        List<Object> values = instance.getValues();
+        int i = (Integer) index;
+
+        if (i < 0 || i >= values.size())
+            throw new RuntimeException("Array index out of bounds.");
+
+        values.set(i, value);
+
+        return value;
+    }
+
+    @Override
+    public Object visitGetExpression(GetExpression expression) {
+
+        Object object = evaluate(expression.getObject());
+
+        if (object instanceof AnuInstance instance)
+            return instance.get(expression.getName().getLexeme());
+
+        throw new RuntimeException("Object has no properties.");
+    }
+    @Override
+    public Void visitClassStatement(ClassStatement statement) {
+        throw new UnsupportedOperationException(
+                "Classes are not implemented yet.");
     }
 }

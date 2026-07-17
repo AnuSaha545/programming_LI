@@ -62,6 +62,17 @@ public class Lexer {
                 }
 
                 break;
+            case ',':
+                addToken(TokenType.COMMA);
+                break;
+
+            case '[':
+                addToken(TokenType.LEFT_BRACKET);
+                break;
+
+            case ']':
+                addToken(TokenType.RIGHT_BRACKET);
+                break;
 
             case '(':
                 addToken(TokenType.LEFT_PAREN);
@@ -89,6 +100,9 @@ public class Lexer {
 
             case '*':
                 addToken(TokenType.STAR);
+                break;
+            case '.':
+                addToken(TokenType.DOT);
                 break;
 
             case '/':

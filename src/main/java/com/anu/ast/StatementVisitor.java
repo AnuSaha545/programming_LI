@@ -20,4 +20,5 @@ public interface StatementVisitor<T> {
 
     T visitBreakStatement(BreakStatement statement);
 
+    T visitClassStatement(ClassStatement statement);
 }

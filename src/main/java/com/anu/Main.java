@@ -3,7 +3,6 @@ package com.anu;
 import com.anu.ast.Program;
 import com.anu.cli.Command;
 import com.anu.cli.CommandParser;
-import com.anu.cli.CommandType;
 import com.anu.interpreter.Interpreter;
 import com.anu.io.SourceReader;
 import com.anu.lexer.Lexer;
@@ -50,6 +49,12 @@ public class Main {
 
         Lexer lexer = new Lexer(source);
         List<Token> tokens = lexer.scanTokens();
+
+        System.out.println("===== TOKENS =====");
+        for (Token token : tokens) {
+            System.out.println(token);
+        }
+        System.out.println("==================");
 
         Parser parser = new Parser(tokens);
         Program program = parser.parse();
