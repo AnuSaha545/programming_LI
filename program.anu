@@ -1,18 +1,14 @@
-let numbers = [10, 20, 30];
+class Person {
 
-print numbers;
-print numbers[1];
+    fun init(name) {
+        this.name = name;
+    }
 
-numbers[1] = 100;
+    fun greet() {
+        print "Hello " + this.name;
+    }
+}
 
-print numbers;
+let p = Person("Anu");
 
-numbers.add(40);
-
-print numbers;
-
-print numbers.remove(1);
-
-print numbers;
-
-print numbers.size();
+p.greet();

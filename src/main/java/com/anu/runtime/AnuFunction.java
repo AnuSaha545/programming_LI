@@ -10,9 +10,17 @@ import com.anu.runtime.Return;
 public class AnuFunction implements AnuCallable {
 
     private final FunctionStatement declaration;
+    private final AnuObject instance;
 
     public AnuFunction(FunctionStatement declaration) {
+        this(declaration, null);
+    }
+
+    public AnuFunction(FunctionStatement declaration,
+                       AnuObject instance) {
+
         this.declaration = declaration;
+        this.instance = instance;
     }
 
     @Override
@@ -29,6 +37,10 @@ public class AnuFunction implements AnuCallable {
 
         Environment previous = interpreter.getEnvironment();
         Environment local = new Environment(previous);
+
+        if (instance != null) {
+            local.define("this", instance);
+        }
 
         for (int i = 0; i < declaration.getParameters().size(); i++) {
             local.define(
@@ -48,5 +60,8 @@ public class AnuFunction implements AnuCallable {
         interpreter.setEnvironment(previous);
 
         return null;
+    }
+    public AnuFunction bind(AnuObject instance) {
+        return new AnuFunction(declaration, instance);
     }
 }

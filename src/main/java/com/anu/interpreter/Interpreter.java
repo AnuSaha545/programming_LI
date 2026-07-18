@@ -11,6 +11,7 @@ import com.anu.ast.ReturnStatement;
 import com.anu.runtime.LenFunction;
 import com.anu.runtime.InputFunction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import com.anu.ast.ClassStatement;
 
@@ -72,8 +73,8 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     public Object visitLiteralExpression(LiteralExpression expression) {
 
         Object value = expression.getValue();
-        if (value instanceof String) {
-            return new StringInstance((String) value);
+        if (value instanceof String s) {
+            return new StringInstance(s);
         }
         return value;
     }
@@ -113,16 +114,18 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
             case PLUS:
 
-                if (left instanceof Integer && right instanceof Integer) {
-                    return (Integer) left + (Integer) right;
+                // Number + Number
+                if (left instanceof Double && right instanceof Double) {
+                    return (Double) left + (Double) right;
                 }
-
-                if (left instanceof String || right instanceof String) {
-                    return String.valueOf(left) + String.valueOf(right);
+                // String concatenation
+                if (left instanceof StringInstance || right instanceof StringInstance) {
+                    return new StringInstance(
+                            stringify(left) + stringify(right)
+                    );
                 }
 
                 throw new RuntimeException("Invalid operands for '+'");
-
             case MINUS:
                 return (Integer) left - (Integer) right;
 
@@ -195,21 +198,24 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         return null;
     }
 
-    private String stringify(Object value) {
+    private String stringify(Object object) {
 
-        if (value == null)
+        if (object == null) {
             return "null";
+        }
 
-        if (value instanceof Integer)
-            return value.toString();
+        if (object instanceof StringInstance stringInstance) {
+            return stringInstance.getValue();
+        }
 
-        if (value instanceof Boolean)
-            return value.toString();
+        if (object instanceof Double number) {
+            if (number == number.longValue()) {
+                return String.valueOf(number.longValue());
+            }
+            return number.toString();
+        }
 
-        if (value instanceof StringInstance string)
-            return string.getValue();
-
-        return value.toString();
+        return object.toString();
     }
     @Override
     public Void visitVariableStatement(VariableStatement statement) {
@@ -409,7 +415,44 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     }
     @Override
     public Void visitClassStatement(ClassStatement statement) {
-        throw new UnsupportedOperationException(
-                "Classes are not implemented yet.");
+
+        HashMap<String, AnuFunction> methods = new HashMap<>();
+
+        for (FunctionStatement method : statement.getMethods()) {
+            methods.put(
+                    method.getName().getLexeme(),
+                    new AnuFunction(method)
+            );
+        }
+
+        AnuClass anuClass = new AnuClass(
+                statement.getName().getLexeme(),
+                methods
+        );
+
+        environment.define(
+                statement.getName().getLexeme(),
+                anuClass
+        );
+
+        return null;
+    }
+    @Override
+    public Object visitSetExpression(SetExpression expression) {
+
+        Object object = evaluate(expression.getObject());
+
+        if (!(object instanceof AnuObject instance)) {
+            throw new RuntimeException("Only objects have fields.");
+        }
+
+        Object value = evaluate(expression.getValue());
+
+        instance.set(
+                expression.getName().getLexeme(),
+                value
+        );
+
+        return value;
     }
 }

@@ -21,6 +21,7 @@ public class Keywords {
         KEYWORDS.put("for", TokenType.FOR);
         KEYWORDS.put("break", TokenType.BREAK);
         KEYWORDS.put("class", TokenType.CLASS);
+        KEYWORDS.put("this", TokenType.THIS);
     }
 
     private Keywords() {

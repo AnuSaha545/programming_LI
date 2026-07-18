@@ -24,7 +24,7 @@ public class AnuObject implements AnuInstance {
                 klass.findMethod(name);
 
         if (method != null)
-            return method;
+            return method.bind(this);
 
         throw new RuntimeException(
                 "Undefined property '" + name + "'.");

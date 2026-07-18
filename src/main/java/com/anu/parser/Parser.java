@@ -35,6 +35,10 @@ public class Parser {
 
     private Statement statement() {
 
+        if (match(TokenType.CLASS)) {
+            return classDeclaration();
+        }
+
         if (match(TokenType.FUN)) {
             return functionDeclaration();
         }
@@ -294,6 +298,16 @@ public class Parser {
 
                 return new AssignmentExpression(name, value);
             }
+            if (expression instanceof GetExpression) {
+
+                GetExpression get = (GetExpression) expression;
+
+                return new SetExpression(
+                        get.getObject(),
+                        get.getName(),
+                        value
+                );
+            }
 
             if (expression instanceof IndexExpression) {
 
@@ -404,6 +418,9 @@ public class Parser {
 
         if (match(TokenType.STRING)) {
             return new LiteralExpression(previous().getLiteral());
+        }
+        if (match(TokenType.THIS)) {
+            return new VariableExpression(previous());
         }
 
         if (match(TokenType.IDENTIFIER)) {
@@ -542,20 +559,28 @@ public class Parser {
     }
     private Statement classDeclaration() {
 
-        Token name = consume(TokenType.IDENTIFIER,
-                "Expected class name.");
+        Token name = consume(
+                TokenType.IDENTIFIER,
+                "Expected class name."
+        );
 
-        consume(TokenType.LEFT_BRACE,
-                "Expected '{' before class body.");
-
+        consume(
+                TokenType.LEFT_BRACE,
+                "Expected '{' before class body."
+        );
         List<FunctionStatement> methods = new ArrayList<>();
 
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            consume(
+                    TokenType.FUN,
+                    "Expected 'fun' before method declaration."
+            );
             methods.add(functionDeclaration());
         }
-
-        consume(TokenType.RIGHT_BRACE,
-                "Expected '}' after class body.");
+        consume(
+                TokenType.RIGHT_BRACE,
+                "Expected '}' after class body."
+        );
 
         return new ClassStatement(name, methods);
     }

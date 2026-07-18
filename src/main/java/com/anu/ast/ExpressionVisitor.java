@@ -21,4 +21,6 @@ public interface ExpressionVisitor<T> {
     T visitSetIndexExpression(SetIndexExpression expression);
 
     T visitGetExpression(GetExpression expression);
+
+    T visitSetExpression(SetExpression expression);
 }
