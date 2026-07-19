@@ -7,8 +7,7 @@ public class AnuObject implements AnuInstance {
 
     private final AnuClass klass;
 
-    private final Map<String, Object> fields =
-            new HashMap<>();
+    private final Map<String, Object> fields = new HashMap<>();
 
     public AnuObject(AnuClass klass) {
         this.klass = klass;
@@ -17,17 +16,19 @@ public class AnuObject implements AnuInstance {
     @Override
     public Object get(String name) {
 
-        if (fields.containsKey(name))
+        if (fields.containsKey(name)) {
             return fields.get(name);
+        }
 
-        AnuFunction method =
-                klass.findMethod(name);
+        AnuFunction method = klass.findMethod(name);
 
-        if (method != null)
-            return method.bind(this);
+        if (method != null) {
+            return method.bind(this, klass.getSuperclass());
+        }
 
         throw new RuntimeException(
-                "Undefined property '" + name + "'.");
+                "Undefined property '" + name + "'."
+        );
     }
 
     public void set(String name, Object value) {

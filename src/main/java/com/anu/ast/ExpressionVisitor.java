@@ -23,4 +23,6 @@ public interface ExpressionVisitor<T> {
     T visitGetExpression(GetExpression expression);
 
     T visitSetExpression(SetExpression expression);
+
+    T visitSuperExpression(SuperExpression expression);
 }

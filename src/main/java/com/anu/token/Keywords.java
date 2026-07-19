@@ -22,6 +22,8 @@ public class Keywords {
         KEYWORDS.put("break", TokenType.BREAK);
         KEYWORDS.put("class", TokenType.CLASS);
         KEYWORDS.put("this", TokenType.THIS);
+        KEYWORDS.put("extends", TokenType.EXTENDS);
+        KEYWORDS.put("super", TokenType.SUPER);
     }
 
     private Keywords() {

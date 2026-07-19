@@ -416,9 +416,25 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     @Override
     public Void visitClassStatement(ClassStatement statement) {
 
+        AnuClass superclass = null;
+
+        if (statement.getSuperclass() != null) {
+
+            Object superObject = evaluate(statement.getSuperclass());
+
+            if (!(superObject instanceof AnuClass)) {
+                throw new RuntimeException(
+                        "Superclass must be a class."
+                );
+            }
+
+            superclass = (AnuClass) superObject;
+        }
+
         HashMap<String, AnuFunction> methods = new HashMap<>();
 
         for (FunctionStatement method : statement.getMethods()) {
+
             methods.put(
                     method.getName().getLexeme(),
                     new AnuFunction(method)
@@ -427,6 +443,7 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         AnuClass anuClass = new AnuClass(
                 statement.getName().getLexeme(),
+                superclass,
                 methods
         );
 
@@ -455,4 +472,34 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return value;
     }
+
+    @Override
+    public Object visitSuperExpression(SuperExpression expression) {
+
+        Object superObject = environment.get("super");
+
+        if (!(superObject instanceof AnuClass superclass)) {
+            throw new RuntimeException("'super' is not a class.");
+        }
+
+        Object thisObject = environment.get("this");
+
+        if (!(thisObject instanceof AnuObject instance)) {
+            throw new RuntimeException("'this' is not an object.");
+        }
+
+        AnuFunction method = superclass.findMethod(
+                expression.getMethod().getLexeme()
+        );
+
+        if (method == null) {
+            throw new RuntimeException(
+                    "Undefined superclass method '" +
+                            expression.getMethod().getLexeme() + "'."
+            );
+        }
+
+        return method.bind(instance, superclass.getSuperclass());
+    }
+
 }

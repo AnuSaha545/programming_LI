@@ -4,29 +4,33 @@ import com.anu.ast.FunctionStatement;
 import com.anu.interpreter.Interpreter;
 
 import java.util.List;
-import com.anu.runtime.Environment;
-import com.anu.runtime.Return;
+
 
 public class AnuFunction implements AnuCallable {
 
     private final FunctionStatement declaration;
     private final AnuObject instance;
+    private final AnuClass superClass;
 
     public AnuFunction(FunctionStatement declaration) {
-        this(declaration, null);
+        this(declaration, null, null);
     }
 
-    public AnuFunction(FunctionStatement declaration,
-                       AnuObject instance) {
+    public AnuFunction(
+            FunctionStatement declaration,
+            AnuObject instance,
+            AnuClass superClass) {
 
         this.declaration = declaration;
         this.instance = instance;
+        this.superClass = superClass;
     }
 
     @Override
     public int arity() {
         return declaration.getParameters().size();
     }
+
     @Override
     public String toString() {
         return "<fn " + declaration.getName().getLexeme() + ">";
@@ -40,6 +44,9 @@ public class AnuFunction implements AnuCallable {
 
         if (instance != null) {
             local.define("this", instance);
+        }
+        if (superClass != null) {
+            local.define("super", superClass);
         }
 
         for (int i = 0; i < declaration.getParameters().size(); i++) {
@@ -61,7 +68,12 @@ public class AnuFunction implements AnuCallable {
 
         return null;
     }
-    public AnuFunction bind(AnuObject instance) {
-        return new AnuFunction(declaration, instance);
+
+    public AnuFunction bind(AnuObject instance, AnuClass superClass) {
+        return new AnuFunction(
+                declaration,
+                instance,
+                superClass
+        );
     }
 }

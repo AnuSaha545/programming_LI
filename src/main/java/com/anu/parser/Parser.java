@@ -422,6 +422,25 @@ public class Parser {
         if (match(TokenType.THIS)) {
             return new VariableExpression(previous());
         }
+        if (match(TokenType.SUPER)) {
+
+            Token keyword = previous();
+
+            consume(
+                    TokenType.DOT,
+                    "Expected '.' after 'super'."
+            );
+
+            Token method = consume(
+                    TokenType.IDENTIFIER,
+                    "Expected superclass method name."
+            );
+
+            return new SuperExpression(
+                    keyword,
+                    method
+            );
+        }
 
         if (match(TokenType.IDENTIFIER)) {
             return new VariableExpression(previous());
@@ -564,24 +583,44 @@ public class Parser {
                 "Expected class name."
         );
 
+        VariableExpression superclass = null;
+
+        if (match(TokenType.EXTENDS)) {
+
+            Token superName = consume(
+                    TokenType.IDENTIFIER,
+                    "Expected superclass name."
+            );
+
+            superclass = new VariableExpression(superName);
+        }
+
         consume(
                 TokenType.LEFT_BRACE,
                 "Expected '{' before class body."
         );
+
         List<FunctionStatement> methods = new ArrayList<>();
 
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+
             consume(
                     TokenType.FUN,
                     "Expected 'fun' before method declaration."
             );
+
             methods.add(functionDeclaration());
         }
+
         consume(
                 TokenType.RIGHT_BRACE,
                 "Expected '}' after class body."
         );
 
-        return new ClassStatement(name, methods);
+        return new ClassStatement(
+                name,
+                superclass,
+                methods
+        );
     }
 }

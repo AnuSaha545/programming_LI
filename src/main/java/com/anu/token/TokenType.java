@@ -65,6 +65,8 @@ public enum TokenType {
     PRINT,
     CLASS,
     THIS,
+    SUPER,
+    EXTENDS,
 
     // ===== End of File =====
     EOF

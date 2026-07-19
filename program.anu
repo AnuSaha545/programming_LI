@@ -1,14 +1,14 @@
-class Person {
-
-    fun init(name) {
-        this.name = name;
-    }
-
-    fun greet() {
-        print "Hello " + this.name;
+class Animal {
+    fun speak() {
+        print "Animal";
     }
 }
 
-let p = Person("Anu");
+class Dog extends Animal {
+    fun speak() {
+        super.speak();
+        print "Dog";
+    }
+}
 
-p.greet();
+Dog().speak();

@@ -7,20 +7,37 @@ import com.anu.interpreter.Interpreter;
 public class AnuClass implements AnuCallable {
 
     private final String name;
+    private final AnuClass superclass;
     private final Map<String, AnuFunction> methods;
 
-    public AnuClass(String name,
-                    Map<String, AnuFunction> methods) {
+    public AnuClass(
+            String name,
+            AnuClass superclass,
+            Map<String, AnuFunction> methods) {
+
         this.name = name;
+        this.superclass = superclass;
         this.methods = methods;
     }
 
     public String getName() {
         return name;
     }
+    public AnuClass getSuperclass() {
+        return superclass;
+    }
 
     public AnuFunction findMethod(String name) {
-        return methods.get(name);
+
+        if (methods.containsKey(name)) {
+            return methods.get(name);
+        }
+
+        if (superclass != null) {
+            return superclass.findMethod(name);
+        }
+
+        return null;
     }
 
     @Override
@@ -44,7 +61,7 @@ public class AnuClass implements AnuCallable {
         AnuFunction initializer = findMethod("init");
 
         if (initializer != null) {
-            initializer.bind(instance)
+            initializer.bind(instance, superclass)
                     .call(interpreter, arguments);
         }
 
