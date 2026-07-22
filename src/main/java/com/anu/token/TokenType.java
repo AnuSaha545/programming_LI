@@ -45,7 +45,7 @@ public enum TokenType {
     NUMBER,
 
     // ===== Keywords =====
-    LET,
+    VAR,
     FUN,
     RETURN,
 

@@ -40,19 +40,26 @@ public class AnuFunction implements AnuCallable {
     public Object call(Interpreter interpreter, List<Object> arguments) {
 
         Environment previous = interpreter.getEnvironment();
-        Environment local = new Environment(previous);
+
+        // Environment that stores "this" and "super"
+        Environment methodEnvironment = new Environment(previous);
 
         if (instance != null) {
-            local.define("this", instance);
+            methodEnvironment.define("this", instance);
         }
+
         if (superClass != null) {
-            local.define("super", superClass);
+            methodEnvironment.define("super", superClass);
         }
+
+        // Environment for parameters
+        Environment local = new Environment(methodEnvironment);
 
         for (int i = 0; i < declaration.getParameters().size(); i++) {
             local.define(
                     declaration.getParameters().get(i).getLexeme(),
-                    arguments.get(i));
+                    arguments.get(i)
+            );
         }
 
         interpreter.setEnvironment(local);
@@ -68,7 +75,6 @@ public class AnuFunction implements AnuCallable {
 
         return null;
     }
-
     public AnuFunction bind(AnuObject instance, AnuClass superClass) {
         return new AnuFunction(
                 declaration,

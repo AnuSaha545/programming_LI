@@ -59,4 +59,23 @@ public class Environment {
     public Environment getEnclosing() {
         return enclosing;
     }
+
+    private Environment ancestor(int distance) {
+
+        Environment environment = this;
+
+        for (int i = 0; i < distance; i++) {
+            environment = environment.enclosing;
+        }
+
+        return environment;
+    }
+
+    public Object getAt(int distance, String name) {
+        return ancestor(distance).variables.get(name);
+    }
+
+    public void assignAt(int distance, String name, Object value) {
+        ancestor(distance).variables.put(name, value);
+    }
 }

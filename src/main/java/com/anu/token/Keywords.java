@@ -8,7 +8,7 @@ public class Keywords {
     public static final Map<String, TokenType> KEYWORDS = new HashMap<>();
 
     static {
-        KEYWORDS.put("let", TokenType.LET);
+        KEYWORDS.put("let", TokenType.VAR);
         KEYWORDS.put("fun", TokenType.FUN);
         KEYWORDS.put("return", TokenType.RETURN);
         KEYWORDS.put("if", TokenType.IF);

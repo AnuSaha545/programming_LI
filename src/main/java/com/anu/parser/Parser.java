@@ -62,7 +62,7 @@ public class Parser {
             return block();
         }
 
-        if (match(TokenType.LET)) {
+        if (match(TokenType.VAR)) {
             return variableDeclaration();
         }
 
@@ -419,9 +419,7 @@ public class Parser {
         if (match(TokenType.STRING)) {
             return new LiteralExpression(previous().getLiteral());
         }
-        if (match(TokenType.THIS)) {
-            return new VariableExpression(previous());
-        }
+
         if (match(TokenType.SUPER)) {
 
             Token keyword = previous();
@@ -441,11 +439,13 @@ public class Parser {
                     method
             );
         }
+        if (match(TokenType.THIS)) {
+            return new ThisExpression(previous());
+        }
 
         if (match(TokenType.IDENTIFIER)) {
             return new VariableExpression(previous());
         }
-
         if (match(TokenType.LEFT_BRACKET)) {
 
             List<Expression> elements = new ArrayList<>();
@@ -518,7 +518,7 @@ public class Parser {
 
         if (match(TokenType.SEMICOLON)) {
             initializer = null;
-        } else if (match(TokenType.LET)) {
+        } else if (match(TokenType.VAR)) {
             initializer = variableDeclaration();
         } else {
             initializer = expressionStatement();

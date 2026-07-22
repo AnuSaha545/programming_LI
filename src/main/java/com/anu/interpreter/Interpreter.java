@@ -12,13 +12,31 @@ import com.anu.runtime.LenFunction;
 import com.anu.runtime.InputFunction;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import com.anu.ast.ClassStatement;
+import com.sun.jdi.ClassType;
 
 
 public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<Void> {
 
     private Environment environment = new Environment();
+    private final Map<Expression, Integer> locals = new HashMap<>();
+    public void resolve(Expression expression, int depth) {
+        locals.put(expression, depth);
+    }
+    private Object lookUpVariable(String name, Expression expression) {
+
+        Integer distance = locals.get(expression);
+
+        if (distance != null) {
+            Object value = environment.getAt(distance, name);
+            return value;
+        }
+
+        Object value = environment.get(name);
+        return value;
+    }
 
     public Interpreter() {
         environment.define("clock", new ClockFunction());
@@ -81,7 +99,10 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
     @Override
     public Object visitVariableExpression(VariableExpression expression) {
-        return environment.get(expression.getName().getLexeme());
+        return lookUpVariable(
+                expression.getName().getLexeme(),
+                expression
+        );
     }
 
     @Override
@@ -114,10 +135,16 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
             case PLUS:
 
-                // Number + Number
+                // Integer + Integer
+                if (left instanceof Integer && right instanceof Integer) {
+                    return (Integer) left + (Integer) right;
+                }
+
+                // Double + Double
                 if (left instanceof Double && right instanceof Double) {
                     return (Double) left + (Double) right;
                 }
+
                 // String concatenation
                 if (left instanceof StringInstance || right instanceof StringInstance) {
                     return new StringInstance(
@@ -232,9 +259,20 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         Object value = evaluate(expression.getValue());
 
-        environment.assign(
-                expression.getName().getLexeme(),
-                value);
+        Integer distance = locals.get(expression);
+
+        if (distance != null) {
+            environment.assignAt(
+                    distance,
+                    expression.getName().getLexeme(),
+                    value
+            );
+        } else {
+            environment.assign(
+                    expression.getName().getLexeme(),
+                    value
+            );
+        }
 
         return value;
     }
@@ -483,7 +521,6 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         }
 
         Object thisObject = environment.get("this");
-
         if (!(thisObject instanceof AnuObject instance)) {
             throw new RuntimeException("'this' is not an object.");
         }
@@ -500,6 +537,15 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         }
 
         return method.bind(instance, superclass.getSuperclass());
+    }
+    @Override
+    public Object visitThisExpression(ThisExpression expression) {
+        Object value = lookUpVariable(
+                expression.getKeyword().getLexeme(),
+                expression
+        );
+
+        return value;
     }
 
 }

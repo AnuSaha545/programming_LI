@@ -25,4 +25,6 @@ public interface ExpressionVisitor<T> {
     T visitSetExpression(SetExpression expression);
 
     T visitSuperExpression(SuperExpression expression);
+
+    T visitThisExpression(ThisExpression expression);
 }
