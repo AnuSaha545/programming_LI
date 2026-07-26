@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import com.anu.ast.ClassStatement;
-import com.sun.jdi.ClassType;
+import com.anu.ast.ContinueStatement;
+import com.anu.runtime.Continue;
 
 
 public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<Void> {
@@ -45,31 +46,24 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     }
 
     public void executeBlock(BlockStatement block, Environment environment) {
-
         executeBlock(block.getStatements(), environment);
     }
 
     public void executeBlock(List<Statement> statements, Environment environment) {
-
         Environment previous = this.environment;
-
         try {
             this.environment = environment;
-
             for (Statement statement : statements) {
                 execute(statement);
             }
-
-        } finally {
+        } finally
+        {
             this.environment = previous;
         }
     }
-    /* ===========================
-       Program Execution
-       =========================== */
+    // Program Execution
 
     public void execute(Program program) {
-
         for (Statement statement : program.getStatements()) {
             execute(statement);
         }
@@ -83,13 +77,10 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         return expression.accept(this);
     }
 
-    /* ===========================
-       Expression Visitors
-       =========================== */
+    // Expression Visitors
 
     @Override
     public Object visitLiteralExpression(LiteralExpression expression) {
-
         Object value = expression.getValue();
         if (value instanceof String s) {
             return new StringInstance(s);
@@ -107,11 +98,8 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
     @Override
     public Object visitUnaryExpression(UnaryExpression expression) {
-
         Object right = evaluate(expression.getRight());
-
         switch (expression.getOperator().getType()) {
-
             case MINUS:
                 return -((Integer) right);
 
@@ -132,7 +120,6 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         Object right = evaluate(expression.getRight());
 
         switch (expression.getOperator().getType()) {
-
             case PLUS:
 
                 // Integer + Integer
@@ -152,6 +139,12 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
                     );
                 }
 
+                System.out.println("LEFT = " + left);
+                System.out.println("LEFT TYPE = " + (left == null ? "null" : left.getClass()));
+
+                System.out.println("RIGHT = " + right);
+                System.out.println("RIGHT TYPE = " + (right == null ? "null" : right.getClass()));
+
                 throw new RuntimeException("Invalid operands for '+'");
             case MINUS:
                 return (Integer) left - (Integer) right;
@@ -160,19 +153,15 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
                 return (Integer) left * (Integer) right;
 
             case SLASH:
-
                 if ((Integer) right == 0) {
                     throw new RuntimeException("Division by zero.");
                 }
-
                 return (Integer) left / (Integer) right;
 
             case MODULO:
-
                 if ((Integer) right == 0) {
                     throw new RuntimeException("Division by zero.");
                 }
-
                 return (Integer) left % (Integer) right;
 
             case GREATER:
@@ -199,15 +188,11 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
                 return (Boolean) left || (Boolean) right;
 
             default:
-                throw new RuntimeException(
-                        "Unknown operator: "
-                                + expression.getOperator().getLexeme());
+                throw new RuntimeException("Unknown operator: " + expression.getOperator().getLexeme());
         }
     }
 
-    /* ===========================
-       Statement Visitors
-       =========================== */
+       // Statement Visitors
 
     @Override
     public Void visitExpressionStatement(ExpressionStatement statement) {
@@ -217,16 +202,12 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
     @Override
     public Void visitPrintStatement(PrintStatement statement) {
-
         Object value = evaluate(statement.getExpression());
-
         System.out.println(stringify(value));
-
         return null;
     }
 
     private String stringify(Object object) {
-
         if (object == null) {
             return "null";
         }
@@ -241,73 +222,62 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
             }
             return number.toString();
         }
-
         return object.toString();
     }
     @Override
     public Void visitVariableStatement(VariableStatement statement) {
-
         Object value = evaluate(statement.getInitializer());
-
         environment.define(statement.getName().getLexeme(), value);
-
         return null;
     }
 
     @Override
     public Object visitAssignmentExpression(AssignmentExpression expression) {
-
         Object value = evaluate(expression.getValue());
-
         Integer distance = locals.get(expression);
-
         if (distance != null) {
             environment.assignAt(
                     distance,
                     expression.getName().getLexeme(),
                     value
             );
-        } else {
+        } else
+        {
             environment.assign(
                     expression.getName().getLexeme(),
                     value
             );
         }
-
         return value;
     }
 
     @Override
     public Void visitBlockStatement(BlockStatement statement) {
-
         executeBlock(
                 statement,
                 new Environment(environment));
-
         return null;
     }
 
     @Override
     public Void visitIfStatement(IfStatement statement) {
-
         Object condition = evaluate(statement.getCondition());
-
         if ((Boolean) condition) {
             execute(statement.getThenBranch());
-        } else if (statement.getElseBranch() != null) {
+        } else if (statement.getElseBranch() != null)
+        {
             execute(statement.getElseBranch());
         }
-
         return null;
     }
 
     @Override
     public Void visitWhileStatement(WhileStatement statement) {
-
         while ((Boolean) evaluate(statement.getCondition())) {
-
             try {
                 execute(statement.getBody());
+            } catch (Continue ignored) {
+                continue;
             } catch (Break ignored) {
                 break;
             }
@@ -317,27 +287,25 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
     @Override
     public Void visitFunctionStatement(FunctionStatement statement) {
-
-        AnuFunction function = new AnuFunction(statement);
-
+        AnuFunction function = new AnuFunction(
+                statement,
+                environment
+        );
         environment.define(
                 statement.getName().getLexeme(),
-                function);
-
+                function
+        );
         return null;
     }
 
     @Override
     public Object visitCallExpression(CallExpression expression) {
-
         Object callee = evaluate(expression.getCallee());
-
         if (!(callee instanceof AnuCallable)) {
             throw new RuntimeException("Can only call functions.");
         }
 
         AnuCallable function = (AnuCallable) callee;
-
         List<Object> arguments = new java.util.ArrayList<>();
 
         for (Expression argument : expression.getArguments()) {
@@ -350,7 +318,6 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
                             + " arguments but got "
                             + arguments.size() + ".");
         }
-
         return function.call(this, arguments);
     }
 
@@ -358,11 +325,9 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     public Void visitReturnStatement(ReturnStatement statement) {
 
         Object value = null;
-
         if (statement.getValue() != null) {
             value = evaluate(statement.getValue());
         }
-
         throw new com.anu.runtime.Return(value);
     }
 
@@ -392,13 +357,11 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
         for (Expression element : expression.getElements()) {
             values.add(evaluate(element));
         }
-
         return new ArrayInstance(values);
     }
 
     @Override
     public Object visitIndexExpression(IndexExpression expression) {
-
         Object array = evaluate(expression.getArray());
         Object index = evaluate(expression.getIndex());
 
@@ -435,47 +398,39 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         if (i < 0 || i >= values.size())
             throw new RuntimeException("Array index out of bounds.");
-
         values.set(i, value);
-
         return value;
     }
 
     @Override
     public Object visitGetExpression(GetExpression expression) {
-
         Object object = evaluate(expression.getObject());
 
         if (object instanceof AnuInstance instance)
             return instance.get(expression.getName().getLexeme());
-
         throw new RuntimeException("Object has no properties.");
     }
     @Override
     public Void visitClassStatement(ClassStatement statement) {
 
         AnuClass superclass = null;
-
         if (statement.getSuperclass() != null) {
-
             Object superObject = evaluate(statement.getSuperclass());
-
             if (!(superObject instanceof AnuClass)) {
                 throw new RuntimeException(
                         "Superclass must be a class."
                 );
             }
-
             superclass = (AnuClass) superObject;
         }
-
         HashMap<String, AnuFunction> methods = new HashMap<>();
-
         for (FunctionStatement method : statement.getMethods()) {
-
             methods.put(
                     method.getName().getLexeme(),
-                    new AnuFunction(method)
+                    new AnuFunction(
+                            method,
+                            environment
+                    )
             );
         }
 
@@ -484,30 +439,24 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
                 superclass,
                 methods
         );
-
         environment.define(
                 statement.getName().getLexeme(),
                 anuClass
         );
-
         return null;
     }
     @Override
     public Object visitSetExpression(SetExpression expression) {
-
         Object object = evaluate(expression.getObject());
 
         if (!(object instanceof AnuObject instance)) {
             throw new RuntimeException("Only objects have fields.");
         }
-
         Object value = evaluate(expression.getValue());
-
         instance.set(
                 expression.getName().getLexeme(),
                 value
         );
-
         return value;
     }
 
@@ -515,29 +464,25 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
     public Object visitSuperExpression(SuperExpression expression) {
 
         Object superObject = environment.get("super");
-
         if (!(superObject instanceof AnuClass superclass)) {
             throw new RuntimeException("'super' is not a class.");
         }
-
         Object thisObject = environment.get("this");
         if (!(thisObject instanceof AnuObject instance)) {
             throw new RuntimeException("'this' is not an object.");
         }
-
         AnuFunction method = superclass.findMethod(
                 expression.getMethod().getLexeme()
         );
-
         if (method == null) {
             throw new RuntimeException(
                     "Undefined superclass method '" +
                             expression.getMethod().getLexeme() + "'."
             );
         }
-
         return method.bind(instance, superclass.getSuperclass());
     }
+
     @Override
     public Object visitThisExpression(ThisExpression expression) {
         Object value = lookUpVariable(
@@ -547,5 +492,36 @@ public class Interpreter implements ExpressionVisitor<Object>, StatementVisitor<
 
         return value;
     }
+    @Override
+    public Void visitContinueStatement(ContinueStatement statement) {
+        throw new Continue();
+    }
+    @Override
+    public Void visitForStatement(ForStatement statement) {
 
+        Environment previous = environment;
+        environment = new Environment(environment);
+        try {
+            if (statement.getInitializer() != null) {
+                execute(statement.getInitializer());
+            }
+
+            while (statement.getCondition() == null ||
+                    (Boolean) evaluate(statement.getCondition())) {
+                try {
+                    execute(statement.getBody());
+                } catch (Continue ignored) {
+                    // Continue to increment
+                } catch (Break ignored) {
+                    break;
+                }
+                if (statement.getIncrement() != null) {
+                    evaluate(statement.getIncrement());
+                }
+            }
+        } finally {
+            environment = previous;
+        }
+        return null;
+    }
 }

@@ -15,7 +15,6 @@ public class VariableStatement extends Statement {
     public Token getName() {
         return name;
     }
-
     public Expression getInitializer() {
         return initializer;
     }

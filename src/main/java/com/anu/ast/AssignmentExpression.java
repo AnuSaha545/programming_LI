@@ -1,5 +1,4 @@
 package com.anu.ast;
-
 import com.anu.token.Token;
 
 public class AssignmentExpression extends Expression {
@@ -15,7 +14,6 @@ public class AssignmentExpression extends Expression {
     public Token getName() {
         return name;
     }
-
     public Expression getValue() {
         return value;
     }

@@ -17,11 +17,9 @@ public class BinaryExpression extends Expression {
     public Expression getLeft() {
         return left;
     }
-
     public Token getOperator() {
         return operator;
     }
-
     public Expression getRight() {
         return right;
     }

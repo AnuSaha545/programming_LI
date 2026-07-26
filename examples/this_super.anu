@@ -1,0 +1,18 @@
+class Animal {
+
+    fun speak() {
+        print "Animal";
+    }
+}
+
+class Dog extends Animal {
+
+    fun speak() {
+        super.speak();
+        print "Dog";
+    }
+}
+
+let d = Dog();
+
+d.speak();

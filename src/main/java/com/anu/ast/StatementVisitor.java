@@ -14,11 +14,15 @@ public interface StatementVisitor<T> {
 
     T visitWhileStatement(WhileStatement statement);
 
+    T visitForStatement(ForStatement statement);
+
     T visitFunctionStatement(FunctionStatement statement);
 
     T visitReturnStatement(ReturnStatement statement);
 
     T visitBreakStatement(BreakStatement statement);
+
+    T visitContinueStatement(ContinueStatement statement);
 
     T visitClassStatement(ClassStatement statement);
 }

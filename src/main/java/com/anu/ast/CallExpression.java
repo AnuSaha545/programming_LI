@@ -16,7 +16,6 @@ public class CallExpression extends Expression {
     public Expression getCallee() {
         return callee;
     }
-
     public List<Expression> getArguments() {
         return arguments;
     }

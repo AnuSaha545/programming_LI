@@ -5,23 +5,25 @@ import com.anu.interpreter.Interpreter;
 
 import java.util.List;
 
-
 public class AnuFunction implements AnuCallable {
 
     private final FunctionStatement declaration;
+    private final Environment closure;
     private final AnuObject instance;
     private final AnuClass superClass;
 
-    public AnuFunction(FunctionStatement declaration) {
-        this(declaration, null, null);
+    public AnuFunction(FunctionStatement declaration, Environment closure) {
+        this(declaration, closure, null, null);
     }
 
     public AnuFunction(
             FunctionStatement declaration,
+            Environment closure,
             AnuObject instance,
             AnuClass superClass) {
 
         this.declaration = declaration;
+        this.closure = closure;
         this.instance = instance;
         this.superClass = superClass;
     }
@@ -41,28 +43,35 @@ public class AnuFunction implements AnuCallable {
 
         Environment previous = interpreter.getEnvironment();
 
-        // Environment that stores "this" and "super"
-        Environment methodEnvironment = new Environment(previous);
+        Environment environment;
 
-        if (instance != null) {
-            methodEnvironment.define("this", instance);
+        // Ordinary function
+        if (instance == null && superClass == null) {
+            environment = new Environment(closure);
         }
+        // Bound method
+        else {
+            Environment methodEnvironment = new Environment(closure);
 
-        if (superClass != null) {
-            methodEnvironment.define("super", superClass);
+            if (instance != null) {
+                methodEnvironment.define("this", instance);
+            }
+
+            if (superClass != null) {
+                methodEnvironment.define("super", superClass);
+            }
+
+            environment = new Environment(methodEnvironment);
         }
-
-        // Environment for parameters
-        Environment local = new Environment(methodEnvironment);
 
         for (int i = 0; i < declaration.getParameters().size(); i++) {
-            local.define(
+            environment.define(
                     declaration.getParameters().get(i).getLexeme(),
                     arguments.get(i)
             );
         }
 
-        interpreter.setEnvironment(local);
+        interpreter.setEnvironment(environment);
 
         try {
             interpreter.executeStatements(declaration.getBody());
@@ -72,12 +81,13 @@ public class AnuFunction implements AnuCallable {
         }
 
         interpreter.setEnvironment(previous);
-
         return null;
     }
+
     public AnuFunction bind(AnuObject instance, AnuClass superClass) {
         return new AnuFunction(
                 declaration,
+                closure,
                 instance,
                 superClass
         );

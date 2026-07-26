@@ -51,6 +51,7 @@ public enum TokenType {
 
     FOR,
     BREAK,
+    CONTINUE,
 
     IF,
     ELSE,

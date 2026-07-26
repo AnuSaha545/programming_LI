@@ -1,0 +1,14 @@
+class Person {
+
+    fun init(name) {
+        this.name = name;
+    }
+
+    fun greet() {
+        print "Hello " + this.name;
+    }
+}
+
+let p = Person("Anu");
+
+p.greet();
